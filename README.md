@@ -1,2 +1,24 @@
 # spotify-and-visualizer
-A web app with the goal of being able to see an audio analyzation from the user's system audio and integrating a Spotify controller without a dedicated backend
+
+## Project setup
+```
+npm install
+```
+
+### Compiles and hot-reloads for development
+```
+npm run serve
+```
+
+### Compiles and minifies for production
+```
+npm run build
+```
+
+### Lints and fixes files
+```
+npm run lint
+```
+
+### Customize configuration
+See [Configuration Reference](https://cli.vuejs.org/config/).
