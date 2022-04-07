@@ -7,14 +7,14 @@ const axios = require("axios").default;
 
 export class SpotifyAPI {
 
-    constructor() {
+    constructor(rootUrl) {
         this.accessToken = undefined;
         this.refreshToken = undefined;
         this.codeVerifier = undefined;
 
         this.tokenType = "Bearer"
 
-        this.redirURI = "http://localhost:8080/";
+        this.redirURI = rootUrl;
         this.codeChallengeMethod= "S256";
         this.state = 0;
         this.scope = "streaming%20user-read-currently-playing%20user-read-playback-state%20user-modify-playback-state";
