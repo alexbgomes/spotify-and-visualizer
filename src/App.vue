@@ -3,7 +3,7 @@
     <Header/>
 
     <v-main>
-      <Visualizer/>
+      <Visualizer :key="visualizerKey"/>
     </v-main>
 
     <FooterVue/>
@@ -17,6 +17,12 @@ import Visualizer from './components/Visualizer';
 
 export default {
   name: 'App',
+
+  data() {
+    return {
+      visualizerKey: 0
+    }
+  },
 
   components: {
     Header,
@@ -32,6 +38,13 @@ export default {
       })
       return themeColors
     },
+  },
+
+  mounted() {
+    this.$root.$on("updateVisualizer", (evt) => {
+      console.log("Detected:", evt);
+      this.visualizerKey++;
+    });
   }
 };
 </script>

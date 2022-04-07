@@ -4,6 +4,8 @@ export class AudioVisuals {
         this.context = undefined;
         this.analyser = undefined;
         this.frequencyData = undefined;
+        this.res = 64;
+        this.cachedStream = undefined
 
         if(typeof AudioContext !== "undefined") {
             this.context = new AudioContext();
@@ -26,13 +28,14 @@ export class AudioVisuals {
 
     createVisualizerData() {
         // Create the analyser
+        console.log("createVisualizerData... res=", this.res);
         this.analyser = this.context.createAnalyser();
-        this.analyser.fftSize = 64;
+        this.analyser.fftSize = this.res;
         this.frequencyData = new Uint8Array(this.analyser.frequencyBinCount);
 
         // Set up the visualisation elements
-        var barSpacingPercent = 100 / this.analyser.frequencyBinCount;
-        return barSpacingPercent;
+        //var barSpacingPercent = 100 / this.analyser.frequencyBinCount;
+        //return barSpacingPercent;
     }
 
     getStream() {

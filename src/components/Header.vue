@@ -14,6 +14,12 @@
               v-on:click="toggleConnDialog">
                 Menu</v-btn>
         </div>
+        <div v-show="!settingsDialog">
+            <v-btn
+              color="secondary"
+              v-on:click="toggleSettingsDialog">
+                Settings</v-btn>
+        </div>
         <v-dialog
           transition="slide-x-reverse-transition"
           v-model="connDialog"
@@ -47,6 +53,45 @@
                         <v-btn
                           text
                           v-on:click="toggleConnDialog">
+                            Close</v-btn>
+                    </v-card-actions>
+                </v-card>
+            </template>
+        </v-dialog>
+
+        <v-dialog
+          transition="slide-x-reverse-transition"
+          v-model="settingsDialog"
+          content-class="v-dialog--custom">
+            <template>
+                <v-card>
+                    <v-card-text>
+                        <div class="text-h2 px-12 pt-12 pb-4">
+                            <v-icon x-large :color="$vuetify.theme.foreground">mdi-cogs</v-icon>
+                            Settings
+                        </div>
+                        <div class="text-h4 px-12 py-4">
+                            Visualizer Resolution: 
+                            <v-slider 
+                              @end="updateAnalyserResMode" 
+                              :style="'padding-top: 2.5em;'" 
+                              v-model="analyserResMode" 
+                              min="0"
+                              max="4"
+                              ticks="always" 
+                              tick-size="4" 
+                              :tick-labels="resList"></v-slider>
+                        </div>
+                        <div>Notes:
+                            <ul>
+                                <li>More settings like colour options, better data division, may be considered!</li>
+                            </ul>
+                        </div>
+                    </v-card-text>
+                    <v-card-actions class="justify-end">
+                        <v-btn
+                          text
+                          v-on:click="toggleSettingsDialog">
                             Close</v-btn>
                     </v-card-actions>
                 </v-card>
@@ -117,16 +162,19 @@ export default {
     data() {
         return {
             connDialog: true,
+            settingsDialog: false,
             audioErrDialog: false,
             spotifyErrDialog: false,
             spotifyErrMsgIdx: 0,
-            stream: undefined
+            stream: undefined,
+            analyserResMode: 1,
+            resList: [32, 64, 128, 256, 512]
         }
     },
     computed: {
         themeIcon() {
             return this.$vuetify.theme.dark ? "mdi-weather-night" : "mdi-white-balance-sunny";
-        }
+        },
     },
     methods: {
         saveTheme() {
@@ -134,6 +182,9 @@ export default {
         },
         toggleConnDialog() {
             this.connDialog = !this.connDialog;
+        },
+        toggleSettingsDialog() {
+            this.settingsDialog = !this.settingsDialog;
         },
         toggleAudioErrDialog() {
             this.audioErrDialog = !this.audioErrDialog;
@@ -146,19 +197,44 @@ export default {
             this.$spotifyAPI.getAuthCode();
         },
         connectSystemAudio() {
-            this.$audioVisuals.getStream().then(function(stream) {
-                var src = this.$audioVisuals.context.createMediaStreamSource(stream);
-                src.connect(this.$audioVisuals.analyser);
-                //analyser.connect(context.destination); //causes loopback if plugged back into context.destination
-                this.$audioVisuals.resume();
-            }.bind(this))
-            .catch(function(err) {
-                console.log("Hook Error:", err);
-                this.toggleAudioErrDialog();
-            }.bind(this));
+            if (this.$audioVisuals.cachedStream != undefined) {
+                console.log("Called connectSystemAudio when cached stream exists!");
+                this.$audioVisuals.cachedStream.then(function(stream) {
+                    var src = this.$audioVisuals.context.createMediaStreamSource(stream);
+                    src.connect(this.$audioVisuals.analyser);
+                    this.$audioVisuals.resume();
+                    console.log("Found cached stream, reconnected...")
+                }.bind(this))
+                .catch(function(err) {
+                    console.log("Hook Error:", err);
+                    this.toggleAudioErrDialog();
+                }.bind(this));
+            } else {
+                this.$audioVisuals.cachedStream = this.$audioVisuals.getStream().then(function(stream) {
+                    console.log("Caching stream")
+                    var src = this.$audioVisuals.context.createMediaStreamSource(stream);
+                    src.connect(this.$audioVisuals.analyser);
+                    this.$audioVisuals.resume();
+                    return stream;
+                }.bind(this))
+                .catch(function(err) {
+                    console.log("Hook Error:", err);
+                    this.toggleAudioErrDialog();
+                }.bind(this));
+            }
+        },
+        updateAnalyserResMode() {
+            this.$audioVisuals.res = Math.pow(2, this.analyserResMode+5);
+            console.log(`RES: 2^${this.analyserResMode+5}=${Math.pow(2, this.analyserResMode+5)}`);
+            this.$root.$emit("updateVisualizer", "resChange");
+            console.log(this.$audioVisuals.context);
+            this.$audioVisuals.analyser.fftSize = this.$audioVisuals.res;
+            this.$audioVisuals.frequencyData = new Uint8Array(this.$audioVisuals.analyser.frequencyBinCount);
+            this.connectSystemAudio();
         }
     },
     beforeMount() {
+        console.log("Header remounting...");
         this.$vuetify.theme.dark = localStorage.getItem("lightTheme") !== "true";
 
         var fields = this.$spotifyAPI.checkAuthCode();

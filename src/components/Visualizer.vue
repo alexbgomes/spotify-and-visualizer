@@ -80,6 +80,7 @@ export default {
             var anim = () => {
                 requestAnimationFrame(anim);
                 this.freqData = this.$audioVisuals.frequencyData;
+                //console.log("freqDat:", this.freqData);
                 this.$audioVisuals.analyser.getByteFrequencyData(this.$audioVisuals.frequencyData);
                 var temp = []
                 for(var i = 0; i < this.$audioVisuals.analyser.frequencyBinCount; i++) {
@@ -186,12 +187,15 @@ export default {
     },
     beforeMount() {
         this.$audioVisuals.createVisualizerData();
-        this.analyser =  this.$audioVisuals.analyser;
+        this.analyser = this.$audioVisuals.analyser;
         this.barSpacingPercent = 100 / this.analyser.frequencyBinCount;
+
+        console.log("Visualizer remounting... Res:", this.$audioVisuals.res);
     },
     mounted() {
         this.startUpdating();
-    },
+        console.log("Remounted Visualizer");
+    }
 }
 </script>
 
